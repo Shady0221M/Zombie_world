@@ -23,7 +23,18 @@ var shield_coordinates;
 const backgroundImage = new Image();
 var is_game_over=false;
 
-
+function initializeLocalStorage() {
+    if (!localStorage.getItem('score1')) {
+        localStorage.setItem('score1', '0');
+    }
+    if (!localStorage.getItem('score2')) {
+        localStorage.setItem('score2', '0');
+    }
+    if (!localStorage.getItem('score3')) {
+        localStorage.setItem('score3', '0');
+    }
+}
+initializeLocalStorage()
 function check_below(item,zob){
     var i=0;
     if (zob=='block'){
@@ -257,6 +268,7 @@ class Blocks{
     create(){
         this.image.src='../images/block.png';
         c.drawImage(this.image,0,0,249,267,this.coordinate.x,this.coordinate.y,this.width,this.height);
+        c.strokeRect(this.coordinate.x,this.coordinate.y,this.width,this.height);
     }
     translate(){
             var j=check_below(this,'block');
@@ -423,7 +435,7 @@ class Player{
                 this.coordinate.x=this.coordinate.x+this.velocity.x;
         }
         }
-    shield(){console.log(this.shield_access);
+    shield(){
         if (this.shield_access==true){
             this.shieldImage.src='../images/shield_powerup.png';
             c.drawImage(this.shieldImage,0,0,108,116,shield_coordinates.x,shield_coordinates.y,40,40);
@@ -527,7 +539,7 @@ class Zombie{
         this.coordinate.x=this.coordinate.x+this.velocity.x;
 
         var j=check_infront(this,'block');
-        if (j<blocks.length){console.log(j)
+        if (j<blocks.length){
             if (this.velocity.x>0){
                 this.coordinate.x=blocks[j].coordinate.x-this.width;
             }
@@ -535,10 +547,8 @@ class Zombie{
                 this.coordinate.x=blocks[j].coordinate.x+blocks[j].width;
             }
             this.velocity.x=0;
-            console.log("First")
         }
         else if (j==blocks.length){
-            console.log("Second")
             var j=check_infront(this,'zombie');
             if (j<zombies.length){
                  if (this.velocity.x>0){
@@ -551,7 +561,6 @@ class Zombie{
             
             }
             else if (j==zombies.length){
-                
             }
         }
         }
@@ -561,8 +570,6 @@ class Zombie{
         if (this.velocity.x!=0){this.frame=this.frame+1;}
         else{this.frame=0;}
         if (this.frame>=64){this.frame=0}
-        // c.strokeStyle='black';
-        // c.strokeRect(this.coordinate.x,this.coordinate.y,this.width,this.height);
     }
 }
 
@@ -671,10 +678,51 @@ canvas.addEventListener('click',function(item){
     bullet_new.velocity.x=vel.x;
     bullet_new.velocity.y=vel.y; 
 }) 
-
+function GameOver(){
+    is_game_over=true;document.getElementById('endOfGame').style.display='block';
+    document.getElementById('replay2').addEventListener('click',replay_game);
+    score=document.getElementById('score').innerHTML;
+    score_int=parseInt(score);
+    s1=parseInt(localStorage.getItem('score1'));
+    s2=parseInt(localStorage.getItem('score2'));
+    s3=parseInt(localStorage.getItem('score3'));
+    
+    if (score_int>s1){
+       
+        document.getElementById('hs3').innerHTML=localStorage.getItem('score2');
+        document.getElementById('hs2').innerHTML=localStorage.getItem('score1');
+        document.getElementById('hs1').innerHTML=score+' (New Highscore)';
+        localStorage.setItem('score3', localStorage.getItem('score2'));
+        localStorage.setItem('score2', localStorage.getItem('score1'));
+        localStorage.setItem('score1', score);
+    }
+    else if (score_int>s2 ){
+        document.getElementById('hs1').innerHTML=localStorage.getItem('score1');
+        document.getElementById('hs3').innerHTML=localStorage.getItem('score2');
+        document.getElementById('hs2').innerHTML=score+' (New Highscore)';
+        
+        localStorage.setItem('score3', localStorage.getItem('score2'));
+        localStorage.setItem('score2', score);
+        // localStorage.setItem('score1', localStorage.getItem('score1'));
+    }
+    else if (score_int>s3){
+        document.getElementById('hs1').innerHTML=localStorage.getItem('score1');
+        document.getElementById('hs2').innerHTML=localStorage.getItem('score2');
+        document.getElementById('hs3').innerHTML=score+' (New Highscore)';
+        
+        localStorage.setItem('score3',score);
+        localStorage.setItem('score2', localStorage.getItem('score2'));
+        localStorage.setItem('score1', localStorage.getItem('score1'));
+    }
+    else{
+        document.getElementById('hs1').innerHTML=localStorage.getItem('score1');
+        document.getElementById('hs2').innerHTML=localStorage.getItem('score2');
+        document.getElementById('hs3').innerHTML=localStorage.getItem('score3');
+    }
+}
 
 function animate(){
-    if (hero.health<=0){is_game_over=true;document.getElementById('endOfGame').style.display='block';document.getElementById('replay2').addEventListener('click',replay_game);}
+    if (hero.health<=0){GameOver();}
     if (!is_game_paused&& !is_game_over){requestAnimationFrame(animate);}
     
     c.clearRect(0,0,canvas.width,canvas.height);
@@ -729,3 +777,4 @@ function animate(){
         document.getElementById('score').innerHTML=score_print;
    
 }
+
