@@ -142,7 +142,7 @@ function init(){
     score_print='00000';
     is_game_over=false;
     is_game_paused=false;
-    ground_level=canvas.height-70;
+    ground_level=canvas.height-100;
     kill_strike=0;
     track='none';
     shield_coordinates={x:0,y:0};
@@ -153,7 +153,7 @@ function init(){
     fort=new Fort();
     fort.create();
     //Background
-    backgroundImage.src = '../images/background_images/background.png';
+    backgroundImage.src = '../images/background_images/background_hacker.png';
     //Defense Blocks creation
     for (var i=0;i<8;i++){
         var block=new Blocks();
@@ -211,30 +211,31 @@ function play_game(){
 }
 class Fort{
     constructor(){
-        this.height=260;
+        this.height=280;
         this.width=200;
-        this.coordinate={x:(canvas.width-this.width)/2,y:(ground_level-this.height+20)}
+        this.coordinate={x:(canvas.width-this.width)/2,y:(ground_level-this.height)}
         this.health=100;
         this.toggle=0;
         this.image=new Image();
     }
     create(){
         this.image.src='../images/fort_plain.png';
-        c.drawImage(this.image,0,0,422,591,this.coordinate.x,this.coordinate.y,this.width,this.height);
+        c.drawImage(this.image,0,0,422,539,this.coordinate.x,this.coordinate.y,this.width,this.height);
         
     }
     strength_build(){
         if (check_infront(hero,'fort')&&(this.toggle<3)){
             this.image.src='../images/fort_green.png';
-            c.drawImage(this.image,0,0,422,591,this.coordinate.x,this.coordinate.y,this.width,this.height);
+            c.drawImage(this.image,0,0,422,539,this.coordinate.x,this.coordinate.y,this.width,this.height);
             this.toggle++;
-            hero.health=hero.health+0.2;
+            if (hero.health<=100)
+            {hero.health=hero.health+0.2;}
             // c.fillStyle='black';
             // c.fillRect(this.coordinate.x,this.coordinate.y,this.width,this.height);
         }
         else{
             this.image.src='../images/fort_plain.png';
-            c.drawImage(this.image,0,0,422,591,this.coordinate.x,this.coordinate.y,this.width,this.height);
+            c.drawImage(this.image,0,0,422,539,this.coordinate.x,this.coordinate.y,this.width,this.height);
             this.toggle++;
             // c.fillStyle='green';
             // c.fillRect(this.coordinate.x,this.coordinate.y,this.width,this.height);
@@ -244,19 +245,18 @@ class Fort{
 }
 class Blocks{
     constructor(){
-        this.height=40;
-        this.width=40;
+        this.height=60;
+        this.width=60;
         this.coordinate={
             x:0,y:0
         }
         this.velocity={x:0,y:0}
         this.acceleration={x:0,y:0.2}
+        this.image=new Image();
     }
     create(){
-        c.fillStyle='#FFF5E1';
-        c.strokeStyle='black';
-        c.strokeRect(this.coordinate.x,this.coordinate.y,this.width,this.height);
-        c.fillRect(this.coordinate.x,this.coordinate.y,this.width,this.height);
+        this.image.src='../images/block.png';
+        c.drawImage(this.image,0,0,249,267,this.coordinate.x,this.coordinate.y,this.width,this.height);
     }
     translate(){
             var j=check_below(this,'block');
