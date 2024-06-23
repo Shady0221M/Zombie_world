@@ -1,0 +1,68 @@
+body {
+    display: flex;
+    background-image: linear-gradient(135deg, #00224D, #5D0E41);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-family: 'Raleway', sans-serif;
+    margin: 0;
+    height: 100vh;
+}
+h1 {
+    font-size: 40px;
+    font-weight: 900;
+    color: antiquewhite;
+    font-family: 'Marker Felt', 'fantasy';
+    margin: 20px 0;
+}
+.outerdiv {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+    top: 20px;
+}
+.mode {
+    background-color: #FF204E;
+    height: 300px;
+    width: 300px;
+    margin: 20px;
+    color: #FFFFE0;
+    border: solid 5px #FFAF61;
+    font-size: 30px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-size: cover;
+    background-position: center;
+}
+#m1 {
+    background-image: url("../images/Normal.jpeg");
+}
+#m2 {
+    background-image: url("../images/Hacker.jpeg");
+}
+.start {
+    color: #FFFFE0;
+    margin-top: 20px;
+    cursor: pointer;
+    font-family: 'Roboto', sans-serif;
+}
+@media (max-width: 480px) {
+    .outerdiv {
+        flex-direction:column;
+        align-items:center;
+    }
+    h1 {
+        font-size:30px;
+    }
+    .mode {
+        height:150px;
+        width: 150px;
+        font-size: 16px;
+    }
+    .start {
+        font-size:14px;}
+}
