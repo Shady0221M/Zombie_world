@@ -18,7 +18,18 @@ var score_print;
 var score;
 const backgroundImage = new Image();
 var is_game_over=false;
-
+function initializeLocalStorage() {
+    if (!localStorage.getItem('score1')) {
+        localStorage.setItem('score1', '0');
+    }
+    if (!localStorage.getItem('score2')) {
+        localStorage.setItem('score2', '0');
+    }
+    if (!localStorage.getItem('score3')) {
+        localStorage.setItem('score3', '0');
+    }
+}
+initializeLocalStorage()
 
 function check_below(item,zob){
     var i=0
@@ -216,13 +227,13 @@ class Blocks{
     }
     create(){
         this.image.src='../images/block.png';
-        c.drawImage(this.image,0,0,249,267,this.coordinate.x,this.coordinate.y,this.width,this.height);
+        c.drawImage(this.image,0,0,249,262,this.coordinate.x,this.coordinate.y,this.width,this.height);
     }
     translate(){
             var j=check_below(this,'block');
             if (j<blocks.length){
                 this.velocity.y=0;
-                this.coordinate.y=blocks[j].coordinate.y-this.height;
+                this.coordinate.y=blocks[j].coordinate.y-this.height+3;
                
             }
             else if(j==blocks.length){
@@ -605,8 +616,46 @@ canvas.addEventListener('click',function(item){
 }) 
 
 
+function GameOver(){
+    is_game_over=true;document.getElementById('endOfGame').style.display='block';
+    document.getElementById('replay2').addEventListener('click',replay_game);
+    score=document.getElementById('score').innerHTML;
+    score_int=parseInt(score);
+    s1=parseInt(localStorage.getItem('score1'));
+    s2=parseInt(localStorage.getItem('score2'));
+    s3=parseInt(localStorage.getItem('score3'));
+    if (score_int>s1){
+        document.getElementById('hs3').innerHTML=localStorage.getItem('score2');
+        document.getElementById('hs2').innerHTML=localStorage.getItem('score1');
+        document.getElementById('hs1').innerHTML=score+' (New Highscore)';
+        localStorage.setItem('score3',localStorage.getItem('score2'));
+        localStorage.setItem('score2',localStorage.getItem('score1'));
+        localStorage.setItem('score1',score);
+    }
+    else if (score_int>s2){
+        document.getElementById('hs1').innerHTML=localStorage.getItem('score1');
+        document.getElementById('hs3').innerHTML=localStorage.getItem('score2');
+        document.getElementById('hs2').innerHTML=score+' (New Highscore)';
+        localStorage.setItem('score3', localStorage.getItem('score2'));
+        localStorage.setItem('score2', score);
+    }
+    else if (score_int>s3){
+        document.getElementById('hs1').innerHTML=localStorage.getItem('score1');
+        document.getElementById('hs2').innerHTML=localStorage.getItem('score2');
+        document.getElementById('hs3').innerHTML=score+' (New Highscore)';
+        
+        localStorage.setItem('score3',score);
+        localStorage.setItem('score2', localStorage.getItem('score2'));
+        localStorage.setItem('score1', localStorage.getItem('score1'));
+    }
+    else{
+        document.getElementById('hs1').innerHTML=localStorage.getItem('score1');
+        document.getElementById('hs2').innerHTML=localStorage.getItem('score2');
+        document.getElementById('hs3').innerHTML=localStorage.getItem('score3');
+    }
+}
 function animate(){
-    if (hero.health<=0){is_game_over=true;document.getElementById('endOfGame').style.display='block';document.getElementById('replay2').addEventListener('click',replay_game);}
+    if (hero.health<=0){GameOver();}
     if (!is_game_paused && !is_game_over){requestAnimationFrame(animate);}
     
     c.clearRect(0,0,canvas.width,canvas.height);
