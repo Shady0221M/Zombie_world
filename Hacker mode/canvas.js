@@ -11,6 +11,7 @@ var up_press=false;
 var mouse=new Mouse();
 var vel;var v=10;
 var bullets;
+var pellets;
 var enemyCount;
 var blocks;
 var is_game_paused=false;
@@ -22,6 +23,7 @@ var track;
 var shield_coordinates;
 const backgroundImage = new Image();
 var is_game_over=false;
+var toggle_weapon;
 
 function initializeLocalStorage() {
     if (!localStorage.getItem('score1')) {
@@ -84,11 +86,11 @@ function check_infront(item,zob){
         for (var i=0;i<zombies.length;i++){
             if (item.coordinate.y+item.height>zombies[i].coordinate.y){
                 if (item.velocity.x>0){
-                    if ((item.coordinate.x+item.width+item.velocity.x>=zombies[i].coordinate.x)&&(item.coordinate.x<zombies[i].coordinate.x)&&(zombies[i].velocity.x==0)){
+                    if ((item.coordinate.x+item.width+item.velocity.x>=zombies[i].coordinate.x)&&(item.coordinate.x<zombies[i].coordinate.x)&&((zombies[i].velocity.x==0)||(zombies[i].freeze))){
                         return i;
                     }
                 }else if(item.velocity.x<0){
-                    if ((item.coordinate.x+item.velocity.x<=zombies[i].coordinate.x+zombies[i].width)&&(item.coordinate.x+item.width>zombies[i].coordinate.x+zombies[i].width)&& zombies[i].velocity.x==0){
+                    if ((item.coordinate.x+item.velocity.x<=zombies[i].coordinate.x+zombies[i].width)&&(item.coordinate.x+item.width>zombies[i].coordinate.x+zombies[i].width)&& ((zombies[i].velocity.x==0)||(zombies[i].freeze))){
                         return i;
                     }
                 }else{
@@ -146,9 +148,11 @@ function check_bullet_zombie_collision(bullet,zombie){
 
 function init(){
     blocks=[];
+    pellets=[];
     bullets=[];
     zombies=[];
     enemyCount=1;
+    toggle_weapon='bomb';
     score=0;
     score_print='00000';
     is_game_over=false;
@@ -240,7 +244,7 @@ class Fort{
             c.drawImage(this.image,0,0,422,539,this.coordinate.x,this.coordinate.y,this.width,this.height);
             this.toggle++;
             if (hero.health<=100)
-            {hero.health=hero.health+0.2;}
+            {hero.health=hero.health+0.05;}
             // c.fillStyle='black';
             // c.fillRect(this.coordinate.x,this.coordinate.y,this.width,this.height);
         }
@@ -288,7 +292,67 @@ class Blocks{
         }
     
 }
-
+class Pellet{
+    constructor(){
+        this.radius=10;
+        this.coordinate={
+            x:hero.coordinate.x+(hero.width-this.radius*2)/2,
+            y:hero.coordinate.y+(hero.height-this.radius*2)/2
+        }
+        this.velocity={
+            x:0,
+            y:0
+        }
+        this.acceleration={
+            x:0,
+            y:0.2
+        }
+        this.image=new Image();
+        this.frame=1;
+    }
+    create(){
+        this.image.src='../Sprite/snow_ball.png';
+        c.drawImage(this.image,0,0,539,539,this.coordinate.x-this.radius,this.coordinate.y-this.radius,this.radius*2,this.radius*2);
+    }
+    
+    fire(){
+        for(var i=zombies.length-1;i>=0;i--){
+            if(check_bullet_zombie_collision(this,zombies[i])){
+                // if (track=='zombie'){
+                //     switch(kill_strike){
+                //         case 0:{kill_strike++;break;}
+                //         case 1:{hero.shield_access=true;shield_coordinates=zombies[i].coordinate;kill_strike=0;break;}
+                //     }
+                // // }
+                // track='zombie';
+                zombies[i].freeze=true;
+                this.velocity.x=0;
+                this.velocity.y=0;
+                break;}
+        }
+        if (i=-1){
+            if (this.coordinate.y+this.radius+this.velocity.y<ground_level){
+                this.coordinate.y=this.coordinate.y+this.velocity.y;
+                this.velocity.y=this.velocity.y+this.acceleration.y;
+                this.coordinate.x=this.coordinate.x+this.velocity.x;
+            }
+            else{this.coordinate.y=ground_level-this.radius;
+                this.coordinate.x=this.coordinate.x+this.velocity.x;
+                track='none';
+                kill_strike=0;
+                this.velocity.x=0;
+                this.velocity.y=0;
+            }
+        }
+        
+    }
+    over(){
+        this.image.src='../Sprite/Blast.png';
+        c.drawImage(this.image,200*(this.frame-1),0,200,200,this.coordinate.x-this.radius,this.coordinate.y-this.radius,this.radius*4,this.radius*4);
+        this.frame=this.frame+1;
+        
+    }
+}
 class Bullet{
     constructor(){
         this.radius=20;
@@ -416,6 +480,8 @@ class Player{
             this.image.src='../Sprite/player_walk_left.png';
         }
         else {
+            if(this.direction=='right'){this.image.src='../Sprite/player_walk_right.png';}
+            else{this.image.src='../Sprite/player_walk_left.png';}
             hero.velocity.x=0;
         }
 
@@ -489,6 +555,10 @@ class Zombie{
             y:0.2
         }
         this.direction;
+        this.freeze=false;
+        this.ice_cap=new Image();
+        this.ice_cap.src='../images/ice_burg.png';
+        this.ice_cap_duration=0;
     }
     attack_block(){
         var j=check_infront(this,'block');
@@ -513,8 +583,7 @@ class Zombie{
                 }
             }
             else if(hero.coordinate.x+hero.width>this.coordinate.x && hero.coordinate.x<this.coordinate.x+this.width){
-                
-                hero.health=hero.health-0.1
+                hero.health=hero.health-0.1;
             }
         }
         
@@ -526,15 +595,18 @@ class Zombie{
             }
         }
     translate(){
-        if (this.coordinate.x>hero.coordinate.x+hero.width){
-            this.velocity.x=-0.5;this.direction='left';
-            this.image.src='../Sprite/zombie_walk_left.png';
-        }else if(this.coordinate.x+this.width<hero.coordinate.x)
-            {this.velocity.x=0.5;this.direction='right';
-                this.image.src='../Sprite/zombie_walk_right.png';}
-        else{
-                this.velocity.x=0;
-            }
+        if (!this.freeze){
+            if (this.coordinate.x>hero.coordinate.x+hero.width){
+                this.velocity.x=-0.5;this.direction='left';
+                this.image.src='../Sprite/zombie_walk_left.png';
+            }else if(this.coordinate.x+this.width<hero.coordinate.x)
+                {this.velocity.x=0.5;this.direction='right';
+                    this.image.src='../Sprite/zombie_walk_right.png';}
+            else{
+                    this.velocity.x=0;
+                }
+        }
+        
         // if((this.coordinate.x+this.velocity.x>=0) && (this.coordinate.x+this.width+this.velocity.x<canvas.width))
         this.coordinate.x=this.coordinate.x+this.velocity.x;
 
@@ -558,18 +630,26 @@ class Zombie{
                    this.coordinate.x=zombies[j].coordinate.x+zombies[j].width;
                 }
             this.velocity.x=0;
-            
-            }
-            else if (j==zombies.length){
             }
         }
         }
     
     create(){
         c.drawImage(this.image,150*(Math.ceil(this.frame/8)),0,150,150,this.coordinate.x-40,this.coordinate.y,this.width+80,this.height);
-        if (this.velocity.x!=0){this.frame=this.frame+1;}
+        if (this.velocity.x!=0 && !this.freeze){this.frame=this.frame+1;}
         else{this.frame=0;}
         if (this.frame>=64){this.frame=0}
+        
+        if (this.freeze){c.globalAlpha=0.65;
+            if (this.direction=='left'){c.drawImage(this.ice_cap,0,0,82,139,this.coordinate.x-15,this.coordinate.y-10,this.width+20,this.height+10);}
+            else if (this.direction=='right'){c.drawImage(this.ice_cap,0,0,82,139,this.coordinate.x,this.coordinate.y-10,this.width+20,this.height+10);}
+            c.globalAlpha=1;
+            this.ice_cap_duration++;
+            if (this.ice_cap_duration>400){
+                this.ice_cap_duration=0;
+                this.freeze=false;this.velocity.x=0;
+            }
+        }
     }
 }
 
@@ -581,7 +661,7 @@ window.addEventListener('keydown',({keyCode})=>{
     switch (keyCode){
         case 37:{
             keys_pressed.left.pressed=true;
-            last_key.left.pressed=true;
+            last_key.left.pressed=true;hero.direction='left';
             last_key.right.pressed=false;
             break;
         }
@@ -590,7 +670,7 @@ window.addEventListener('keydown',({keyCode})=>{
             break;
         }
         case 39:{
-            keys_pressed.right.pressed=true;
+            keys_pressed.right.pressed=true;hero.direction='right';
             last_key.left.pressed=false;
             last_key.right.pressed=true;
             break;
@@ -599,7 +679,7 @@ window.addEventListener('keydown',({keyCode})=>{
             break;
         }
         case 65:{
-            keys_pressed.left.pressed=true;
+            keys_pressed.left.pressed=true;hero.direction='left';
             last_key.left.pressed=true;
             last_key.right.pressed=false;
             break;
@@ -608,7 +688,7 @@ window.addEventListener('keydown',({keyCode})=>{
             break;
         }
         case 68:{
-            keys_pressed.right.pressed=true;
+            keys_pressed.right.pressed=true;hero.direction='right';
             last_key.left.pressed=false;
             last_key.right.pressed=true;
             break;
@@ -652,8 +732,37 @@ window.addEventListener('keyup',({keyCode})=>{
         case 87:{
             break;
         }
+        case 32:{
+            console.log('toggle weapon');
+            if (toggle_weapon=='bomb'){toggle_weapon='ice_gun'}
+            else if (toggle_weapon=='ice_gun'){toggle_weapon='bomb';}
+        }
     }
 })
+
+canvas.addEventListener('click',function(item){
+    mouse.x=item.clientX;
+    mouse.y=item.clientY;
+    if (toggle_weapon=='bomb'){
+        bullets.push(new Bullet());
+        var bullet_new=bullets[bullets.length-1];
+        theta=angle(mouse,bullet_new.coordinate.x+bullet_new.radius,bullet_new.coordinate.y+bullet_new.radius);
+        vel=new Velocity(v,theta);
+        bullet_new.velocity.x=vel.x;
+        bullet_new.velocity.y=vel.y; 
+        if (vel.x<0){hero.direction='left'}else{hero.direction='right'}
+    }
+    else if (toggle_weapon=='ice_gun'){
+        pellets.push(new Pellet());
+        var pellet_new=pellets[pellets.length-1];
+        theta=angle(mouse,pellet_new.coordinate.x+pellet_new.radius,pellet_new.coordinate.y+pellet_new.radius);
+        vel=new Velocity(v,theta);
+        pellet_new.velocity.x=vel.x;
+        pellet_new.velocity.y=vel.y; 
+        if (vel.x<0){hero.direction='left'}else{hero.direction='right'}
+    }
+    
+}) 
 
 function SpawnEnemies(enemyCount){
     for (var i=0;i<enemyCount;i++){
@@ -668,16 +777,8 @@ function SpawnEnemies(enemyCount){
     }
 }
 
-canvas.addEventListener('click',function(item){
-    mouse.x=item.clientX;
-    mouse.y=item.clientY;
-    bullets.push(new Bullet());
-    var bullet_new=bullets[bullets.length-1];
-    theta=angle(mouse,bullet_new.coordinate.x+bullet_new.radius,bullet_new.coordinate.y+bullet_new.radius);
-    vel=new Velocity(v,theta);
-    bullet_new.velocity.x=vel.x;
-    bullet_new.velocity.y=vel.y; 
-}) 
+
+
 function GameOver(){
     is_game_over=true;document.getElementById('endOfGame').style.display='block';
     document.getElementById('replay2').addEventListener('click',replay_game);
@@ -686,24 +787,20 @@ function GameOver(){
     s1=parseInt(localStorage.getItem('score1'));
     s2=parseInt(localStorage.getItem('score2'));
     s3=parseInt(localStorage.getItem('score3'));
-    
     if (score_int>s1){
-       
         document.getElementById('hs3').innerHTML=localStorage.getItem('score2');
         document.getElementById('hs2').innerHTML=localStorage.getItem('score1');
         document.getElementById('hs1').innerHTML=score+' (New Highscore)';
-        localStorage.setItem('score3', localStorage.getItem('score2'));
-        localStorage.setItem('score2', localStorage.getItem('score1'));
-        localStorage.setItem('score1', score);
+        localStorage.setItem('score3',localStorage.getItem('score2'));
+        localStorage.setItem('score2',localStorage.getItem('score1'));
+        localStorage.setItem('score1',score);
     }
-    else if (score_int>s2 ){
+    else if (score_int>s2){
         document.getElementById('hs1').innerHTML=localStorage.getItem('score1');
         document.getElementById('hs3').innerHTML=localStorage.getItem('score2');
         document.getElementById('hs2').innerHTML=score+' (New Highscore)';
-        
         localStorage.setItem('score3', localStorage.getItem('score2'));
         localStorage.setItem('score2', score);
-        // localStorage.setItem('score1', localStorage.getItem('score1'));
     }
     else if (score_int>s3){
         document.getElementById('hs1').innerHTML=localStorage.getItem('score1');
@@ -741,7 +838,7 @@ function animate(){
     hero.translate();
     hero.shield();
 
-    //Bullet
+    //Bomb
     bullets.forEach((bullet,index)=>{
         
         if (bullet.velocity.x==0){
@@ -758,15 +855,35 @@ function animate(){
             bullet.fire();
         }
         });
+    //Ice Pellets
+    pellets.forEach((pellet,index)=>{
+        
+        if (pellet.velocity.x==0){
+            
+            pellet.over();
+            if (pellet.frame>8){
+                pellets.splice(index,1);
+                return;
+            }
+           
+        }
+        else{
+            pellet.create();
+            pellet.fire();
+        }
+        });
 
 
         //Zombies
         zombies.forEach((zombie)=>{
-        zombie.create();
-        zombie.translate();
-        zombie.jump();
-        zombie.attack_block();
-        zombie.attack_player();
+            
+                zombie.create();
+                if (!zombie.freeze){
+                zombie.translate();
+                zombie.jump();
+                zombie.attack_block();
+                zombie.attack_player();}
+        
     })
         if(zombies.length==0){
             enemyCount++;
