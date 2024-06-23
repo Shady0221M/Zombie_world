@@ -2,6 +2,12 @@ var canvas=document.getElementById('canvas');
 canvas.height=document.documentElement.clientHeight;
 canvas.width=document.documentElement.clientWidth;
 c=canvas.getContext('2d');
+
+var canvas2=document.getElementById('canvas2');
+canvas2.height=document.documentElement.clientHeight;
+canvas2.width=document.documentElement.clientWidth;
+c2=canvas2.getContext('2d');
+
 var hero;
 var zombies;var zombie1;
 var keys_pressed;
@@ -24,6 +30,10 @@ var shield_coordinates;
 const backgroundImage = new Image();
 var is_game_over=false;
 var toggle_weapon;
+var gunImage;
+var gun;
+var mouse1;
+var weapon_selected;
 
 function initializeLocalStorage() {
     if (!localStorage.getItem('score1')) {
@@ -147,6 +157,18 @@ function check_bullet_zombie_collision(bullet,zombie){
 
 
 function init(){
+    weapon_selected=new Image();
+    mouse1 = {
+        x: 0,
+        y: 0
+    };
+    gunImage=new Image();
+    gun = {
+      x: canvas2.width / 2,
+       y: canvas2.height / 2,
+       width: 72,
+       height: 73 
+    };
     blocks=[];
     pellets=[];
     bullets=[];
@@ -272,7 +294,6 @@ class Blocks{
     create(){
         this.image.src='../images/block.png';
         c.drawImage(this.image,0,0,249,267,this.coordinate.x,this.coordinate.y,this.width,this.height);
-        c.strokeRect(this.coordinate.x,this.coordinate.y,this.width,this.height);
     }
     translate(){
             var j=check_below(this,'block');
@@ -296,8 +317,8 @@ class Pellet{
     constructor(){
         this.radius=10;
         this.coordinate={
-            x:hero.coordinate.x+(hero.width-this.radius*2)/2,
-            y:hero.coordinate.y+(hero.height-this.radius*2)/2
+            x:gun.x,
+            y:gun.y
         }
         this.velocity={
             x:0,
@@ -734,13 +755,17 @@ window.addEventListener('keyup',({keyCode})=>{
         }
         case 32:{
             console.log('toggle weapon');
-            if (toggle_weapon=='bomb'){toggle_weapon='ice_gun'}
-            else if (toggle_weapon=='ice_gun'){toggle_weapon='bomb';}
+            if (toggle_weapon=='bomb'){toggle_weapon='ice_gun';document.getElementById('weapon1').src='../images/gun_left.png';}
+            else if (toggle_weapon=='ice_gun'){toggle_weapon='bomb';document.getElementById('weapon1').src='../Sprite/Bomb1.png';}
         }
     }
 })
+canvas2.addEventListener('mousemove', function(event) {
+    mouse1.x = event.clientX;
+    mouse1.y = event.clientY;
+});
 
-canvas.addEventListener('click',function(item){
+canvas2.addEventListener('click',function(item){
     mouse.x=item.clientX;
     mouse.y=item.clientY;
     if (toggle_weapon=='bomb'){
@@ -824,6 +849,7 @@ function animate(){
     
     c.clearRect(0,0,canvas.width,canvas.height);
     c.drawImage(backgroundImage,0,0,canvas.width,canvas.height);
+    //Weapon Selected
     //Fort
     fort.strength_build();
     //Blocks
@@ -837,6 +863,7 @@ function animate(){
     hero.jump();
     hero.translate();
     hero.shield();
+    
 
     //Bomb
     bullets.forEach((bullet,index)=>{
@@ -872,7 +899,39 @@ function animate(){
             pellet.fire();
         }
         });
-
+    //Gun
+    if (toggle_weapon=='ice_gun'){
+        c2.clearRect(0, 0, canvas2.width, canvas2.height);
+            if (hero.direction=='right'){
+                gun.x=hero.coordinate.x+hero.width;
+                gun.y=hero.coordinate.y+hero.height/2;
+            }
+            else{
+                gun.x=hero.coordinate.x;
+                gun.y=hero.coordinate.y+hero.height/2;
+            }
+            var dx = mouse1.x - gun.x;
+            if (dx>=0){gunImage.src='../images/gun_right.png';
+                hero.direction='right';
+            }
+            else{gunImage.src='../images/gun_left.png';
+                hero.direction='left';
+            }
+            var dy = mouse1.y - gun.y;
+            var angle = Math.atan2(dy, dx);
+            c2.save();
+            c2.translate(gun.x, gun.y);
+            if (dx>=0){c2.rotate(angle);}
+            else{angle += Math.PI;c2.rotate(angle);}
+            
+            c2.drawImage(gunImage, -gun.width / 2, -gun.height / 2, gun.width, gun.height);
+            console.log('drawn');
+            c2.restore();
+    }
+    else{
+        c2.clearRect(0, 0, canvas2.width, canvas2.height);
+    }
+    
 
         //Zombies
         zombies.forEach((zombie)=>{

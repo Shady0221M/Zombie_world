@@ -1,6 +1,11 @@
 #game{
     position:relative;
 }
+#canvas,#canvas2 {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
 #pause{
     width:5vw;
     height:5vw;
@@ -11,8 +16,20 @@
     background-size: cover;
     border-radius: 50%;
 }
+#weapon{
+    position: fixed;
+    top:33%;
+    left:87%;
+    
+    width: 50px;
+    height:50px;
+}
+#weapon1{
+    width:100px;
+    height:100px;
+}
 #gamepause,#endOfGame{
-  position: absolute; 
+  position: fixed; 
   top: 50%; 
   left: 50%; 
   width:30vw;
