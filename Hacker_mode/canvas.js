@@ -63,7 +63,21 @@ function check_below(item,zob){
         return i;
     }
 }
-
+function check_above(item,zob){
+    var i=blocks.length;
+    if (zob=='block'){
+        for(var i=0;i<blocks.length;i++){
+            if(blocks[i]!=item){
+                if((blocks[i].coordinate.x+blocks[i].width>item.coordinate.x) &&
+                (blocks[i].coordinate.x<item.coordinate.x+item.width)&&
+                (blocks[i].coordinate.y+blocks[i].height<=item.coordinate.y)){
+                    return i;
+                }
+            }
+        }
+        return i;
+    }
+}
 function check_infront(item,zob){
     var i=0;
     if (zob=='block'){
@@ -610,50 +624,69 @@ class Zombie{
         
     }
     jump(){
-            if (this.coordinate.y+this.height+this.velocity.y<=ground_level){
+        var j=check_below(this,'block');
+        if (j<blocks.length){
+            this.velocity.y=0;
+        }
+        else if (this.coordinate.y+this.height+this.velocity.y<=ground_level)
+            {
                 this.coordinate.y=this.coordinate.y+this.velocity.y;
                 this.velocity.y=this.velocity.y+this.acceleration.y;
             }
+          else{this.velocity.y=0;}  
+        
         }
-    translate(){
-        if (!this.freeze){
-            if (this.coordinate.x>hero.coordinate.x+hero.width){
-                this.velocity.x=-0.5;this.direction='left';
-                this.image.src='../Sprite/zombie_walk_left.png';
-            }else if(this.coordinate.x+this.width<hero.coordinate.x)
-                {this.velocity.x=0.5;this.direction='right';
-                    this.image.src='../Sprite/zombie_walk_right.png';}
-            else{
+        translate(){
+            if (!this.freeze){
+                if (this.coordinate.x>hero.coordinate.x+hero.width){
+                    this.velocity.x=-0.5;this.direction='left';
+                    this.image.src='../Sprite/zombie_walk_left.png';
+                }else if(this.coordinate.x+this.width<hero.coordinate.x)
+                    {this.velocity.x=0.5;this.direction='right';
+                        this.image.src='../Sprite/zombie_walk_right.png';}
+                else{
+                        this.velocity.x=0;
+                    }
+            }
+            this.coordinate.x=this.coordinate.x+this.velocity.x;
+                var j=check_infront(this,'block');
+                if (j<blocks.length){console.log('HI');
+                    var k=check_above(blocks[j],'block');console.log('k:');console.log(k);
+                    if (k==blocks.length)
+                {   
+                    if (this.velocity.x>0){
+                        this.coordinate.x=blocks[j].coordinate.x-this.width-10;
+                    }
+                    else if (this.velocity.x<0){
+                        this.coordinate.x=blocks[j].coordinate.x+blocks[j].width+10;
+                    }
+                    this.velocity.y=-5;
+                }else{
+                    if (this.velocity.x>0){
+                        this.coordinate.x=blocks[j].coordinate.x-this.width;
+                    }
+                    else if (this.velocity.x<0){
+                        this.coordinate.x=blocks[j].coordinate.x+blocks[j].width;
+                    }
                     this.velocity.x=0;
                 }
-        }
+                    
+                }
+            else if (j==blocks.length){
+                var j=check_infront(this,'zombie');
+                if (j<zombies.length){
+                     if (this.velocity.x>0){
+                        this.coordinate.x=zombies[j].coordinate.x-this.width;
+                    }
+                    else if (this.velocity.x<0){
+                       this.coordinate.x=zombies[j].coordinate.x+zombies[j].width;
+                    }
+                this.velocity.x=0;
+                }
+            }
+            
+            }
         
-        // if((this.coordinate.x+this.velocity.x>=0) && (this.coordinate.x+this.width+this.velocity.x<canvas.width))
-        this.coordinate.x=this.coordinate.x+this.velocity.x;
-
-        var j=check_infront(this,'block');
-        if (j<blocks.length){
-            if (this.velocity.x>0){
-                this.coordinate.x=blocks[j].coordinate.x-this.width;
-            }
-            else if (this.velocity.x<0){
-                this.coordinate.x=blocks[j].coordinate.x+blocks[j].width;
-            }
-            this.velocity.x=0;
-        }
-        else if (j==blocks.length){
-            var j=check_infront(this,'zombie');
-            if (j<zombies.length){
-                 if (this.velocity.x>0){
-                    this.coordinate.x=zombies[j].coordinate.x-this.width;
-                }
-                else if (this.velocity.x<0){
-                   this.coordinate.x=zombies[j].coordinate.x+zombies[j].width;
-                }
-            this.velocity.x=0;
-            }
-        }
-        }
     
     create(){
         c.drawImage(this.image,150*(Math.ceil(this.frame/8)),0,150,150,this.coordinate.x-40,this.coordinate.y,this.width+80,this.height);
